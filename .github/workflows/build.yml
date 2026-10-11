@@ -1,0 +1,43 @@
+name: Slides Build CI
+
+on:
+  pull_request:
+    branches: [ "*" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [22.x]
+        # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Setup pnpm
+      uses: pnpm/action-setup@v4.0.0
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'pnpm'
+    - name: Install dependencies
+      run: pnpm install --frozen-lockfile
+    - name: Install playwright
+      run: pnpm exec playwright install
+    - name: Build the slide
+      run: pnpm run build
+    - name: Export the slide into PDF
+      run: pnpm run export
+    - name: Upload SPA artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist
+    - name: Upload PDF
+      uses: actions/upload-artifact@v4
+      with:
+        name: slides-export.pdf
+        path: slides-export.pdf
